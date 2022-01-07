@@ -63,33 +63,33 @@ def main():
             _, _, h_old, w_old = img_lq.size()
             h_pad = (h_old // window_size + 1) * window_size - h_old
             w_pad = (w_old // window_size + 1) * window_size - w_old
-            img_lq = torch.cat([img_lq, torch.flip(img_lq, [2])], 2)[:, :, :h_old + h_pad, :]
-            img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)[:, :, :, :w_old + w_pad]
+            img_lq = torch.cat([img_lq, torch.flip(img_lq, [2])], 2)
+            img_lq = img_lq[:, :, :h_old + h_pad, :]
+            img_lq = torch.cat([img_lq, torch.flip(img_lq, [3])], 3)
+            img_lq = img_lq[:, :, :, :w_old + w_pad]
             output = test(img_lq, model, args, window_size)
             output = output[..., :h_old * args.scale, :w_old * args.scale]
 
         # save image
         output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
         if output.ndim == 3:
-            output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))  # CHW-RGB to HCW-BGR
-        output = (output * 255.0).round().astype(np.uint8)  # float32 to uint8
+            output = np.transpose(
+                output[[2, 1, 0], :, :],
+                (1, 2, 0))
+        output = (output * 255.0).round().astype(np.uint8)
         cv2.imwrite(f'{save_dir}/{imgname}_pred.png', output)
 
         # evaluate psnr/ssim/psnr_b
         if img_gt is not None:
-            img_gt = (img_gt * 255.0).round().astype(np.uint8)  # float32 to uint8
-            img_gt = img_gt[:h_old * args.scale, :w_old * args.scale, ...]  # crop gt
+            img_gt = (img_gt * 255.0).round().astype(np.uint8)
+            img_gt = img_gt[:h_old * args.scale, :w_old * args.scale, ...]
             img_gt = np.squeeze(img_gt)
 
-            # psnr = util.calculate_psnr(output, img_gt, border=border)
-            # ssim = util.calculate_ssim(output, img_gt, border=border)
             test_results['psnr'].append(psnr)
             test_results['ssim'].append(ssim)
             if img_gt.ndim == 3:  # RGB image
                 output_y = util.bgr2ycbcr(output.astype(np.float32) / 255.) * 255.
                 img_gt_y = util.bgr2ycbcr(img_gt.astype(np.float32) / 255.) * 255.
-                # psnr_y = util.calculate_psnr(output_y, img_gt_y, border=border)
-                # ssim_y = util.calculate_ssim(output_y, img_gt_y, border=border)
                 test_results['psnr_y'].append(psnr_y)
                 test_results['ssim_y'].append(ssim_y)
             if args.task in ['jpeg_car']:
