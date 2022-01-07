@@ -10,8 +10,8 @@ import requests
 from models.network_swinir import SwinIR as net
 from utils import utils_image as util
 """ 
-python main_test_swinir.py --model_path   superresolution/swinir_sr_classical_patch48_x3/models/10000_G.pth \
-    --task classical_sr --scale 3 --folder_lq testing_lr_images --folder_gt testing_lr_images
+python main_test_swinir.py --model_path  model.pth --task classical_sr --scale 3 \
+    --folder_lq testing_lr_images --folder_gt testing_lr_images
 """  
 
 def main():
