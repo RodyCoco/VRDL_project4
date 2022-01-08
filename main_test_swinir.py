@@ -88,8 +88,10 @@ def main():
             test_results['psnr'].append(psnr)
             test_results['ssim'].append(ssim)
             if img_gt.ndim == 3:  # RGB image
-                output_y = util.bgr2ycbcr(output.astype(np.float32) / 255.) * 255.
-                img_gt_y = util.bgr2ycbcr(img_gt.astype(np.float32) / 255.) * 255.
+                output_y = util.bgr2ycbcr(
+                    output.astype(np.float32) / 255.) * 255.
+                img_gt_y = util.bgr2ycbcr(
+                    img_gt.astype(np.float32) / 255.) * 255.
                 test_results['psnr_y'].append(psnr_y)
                 test_results['ssim_y'].append(ssim_y)
             if args.task in ['jpeg_car']:
@@ -102,31 +104,20 @@ def main():
         else:
             print('Testing {:d} {:20s}'.format(idx, imgname))
 
-    # summarize psnr/ssim
-    if img_gt is not None:
-        ave_psnr = sum(test_results['psnr']) / len(test_results['psnr'])
-        ave_ssim = sum(test_results['ssim']) / len(test_results['ssim'])
-        print('\n{} \n-- Average PSNR/SSIM(RGB): {:.2f} dB; {:.4f}'.format(save_dir, ave_psnr, ave_ssim))
-        if img_gt.ndim == 3:
-            ave_psnr_y = sum(test_results['psnr_y']) / len(test_results['psnr_y'])
-            ave_ssim_y = sum(test_results['ssim_y']) / len(test_results['ssim_y'])
-            print('-- Average PSNR_Y/SSIM_Y: {:.2f} dB; {:.4f}'.format(ave_psnr_y, ave_ssim_y))
-        if args.task in ['jpeg_car']:
-            ave_psnr_b = sum(test_results['psnr_b']) / len(test_results['psnr_b'])
-            print('-- Average PSNR_B: {:.2f} dB'.format(ave_psnr_b))
-
 
 def define_model(args):
 
     model = net(upscale=3, in_chans=3, img_size=48, window_size=8,
-                img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
+                img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180,
+                num_heads=[6, 6, 6, 6, 6, 6],
                 mlp_ratio=2, upsampler='pixelshuffle', resi_connection='1conv')
     param_key_g = 'params'
 
-    
     pretrained_model = torch.load(args.model_path)
-    model.load_state_dict(pretrained_model[param_key_g] if param_key_g in pretrained_model.keys() else pretrained_model, strict=True)
-        
+    tmp = pretrained_model[param_key_g] if param_key_g \
+        in pretrained_model.keys() else pretrained_model
+    model.load_state_dict(tmp, strict=True)
+
     return model
 
 
@@ -160,7 +151,8 @@ def test(img_lq, model, args, window_size):
         # test the image tile by tile
         b, c, h, w = img_lq.size()
         tile = min(args.tile, h, w)
-        assert tile % window_size == 0, "tile size should be a multiple of window_size"
+        assert tile % window_size == 0, \
+            "tile size should be a multiple of window_size"
         tile_overlap = args.tile_overlap
         sf = args.scale
 
@@ -176,8 +168,10 @@ def test(img_lq, model, args, window_size):
                 out_patch = model(in_patch)
                 out_patch_mask = torch.ones_like(out_patch)
 
-                E[..., h_idx*sf:(h_idx+tile)*sf, w_idx*sf:(w_idx+tile)*sf].add_(out_patch)
-                W[..., h_idx*sf:(h_idx+tile)*sf, w_idx*sf:(w_idx+tile)*sf].add_(out_patch_mask)
+                E[..., h_idx*sf:(h_idx+tile)*sf, w_idx*sf:(w_idx+tile)*sf]\
+                    .add_(out_patch)
+                W[..., h_idx*sf:(h_idx+tile)*sf, w_idx*sf:(w_idx+tile)*sf]\
+                    .add_(out_patch_mask)
         output = E.div_(W)
 
     return output
