@@ -28,7 +28,7 @@ python main_train_psnr.py --opt train_swinir_sr_classical.json
 ```
 The training result will be in the folder "superresolution" .
 
-## Testing
+## Reproducing Submission
 (Note that model.pth is already in this repository)  
 run:
 
